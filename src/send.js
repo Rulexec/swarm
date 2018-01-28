@@ -20,5 +20,5 @@ connector.started().result(function() {
 
 	var sendTo = parseInt(process.argv[3]);
 
-	if (sendTo) connector.send('localhost', sendTo, Buffer.from('DATA GET 42')).run();
+	if (sendTo) connector.send('localhost', sendTo, Buffer.from('0000000000000000 DATA GET 42')).run();
 }).run();

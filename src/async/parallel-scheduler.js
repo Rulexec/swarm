@@ -11,13 +11,20 @@ function ParallelScheduler() {
 			runningCount++;
 
 			var m = fn();
-			m.any(function() {
+
+			if (!m) {
+				onFinish();
+			} else {
+				m.any(onFinish).run();
+			}
+
+			function onFinish() {
 				runningCount--;
 
 				if (runningCount === 0) {
 					while (finishListeners.length) finishListeners.shift()();
 				}
-			}).run();
+			}
 		});
 	};
 
