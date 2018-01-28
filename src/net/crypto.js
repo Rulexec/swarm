@@ -11,7 +11,7 @@ aes_key = substr (sha256_a, 0, 8) + substr (sha256_b, 8, 16) + substr (sha256_a,
 aes_iv = substr (sha256_b, 0, 8) + substr (sha256_a, 8, 16) + substr (sha256_b, 24, 8);
 */
 
-exports.encrypt = AsyncM.fun(function(onResult, onError, buffer, options) {
+exports.encrypt = AsyncM.pureF(function(buffer, options) {
 	var {authKey, isQuery} = options;
 
 	let padding = buffer.length % 16;
@@ -32,16 +32,12 @@ exports.encrypt = AsyncM.fun(function(onResult, onError, buffer, options) {
 
 	var msgKey = calcMsgKey(buffer, authKey, isQuery);
 
-	crypt(buffer, options, msgKey, true, function(error, buffer) {
-		if (error) onError(error);
-		else onResult({msgKey, buffer});
+	return crypt(buffer, options, msgKey, true).result(function(buffer) {
+		return AsyncM.result({msgKey, buffer});
 	});
 });
-exports.decrypt = AsyncM.fun(function(onResult, onError, buffer, options) {
-	crypt(buffer, options, options.msgKey, false, function(error, buffer) {
-		if (error) onError(error);
-		else onResult(buffer);
-	});
+exports.decrypt = AsyncM.pureF(function(buffer, options) {
+	return crypt(buffer, options, options.msgKey, false);
 });
 
 function calcMsgKey(buffer, authKey, isQuery) {
@@ -58,7 +54,7 @@ function calcMsgKey(buffer, authKey, isQuery) {
 	return msgKey;
 }
 
-function crypt(buffer, options, msgKey, isEncrypt, callback) {
+function crypt(buffer, options, msgKey, isEncrypt) { return AsyncM.pureM(function() {
 	var {authKey, isQuery} = options;
 
 	var x = isQuery;
@@ -124,13 +120,12 @@ function crypt(buffer, options, msgKey, isEncrypt, callback) {
 		let actualMsgKey = calcMsgKey(result, authKey, isQuery);
 
 		if (!msgKey.equals(actualMsgKey)) {
-			callback('invalid');
-			return;
+			return AsyncM.error('msgkey_missmatch');
 		}
 	}
 
-	callback(null, result);
-}
+	return AsyncM.result(result);
+}); }
 
 function xorBuffer(buffer, xor) {
 	for (let i = 0; i < buffer.length; i++) {
