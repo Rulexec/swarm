@@ -1,21 +1,32 @@
 var Connector = require('./net/connector');
 
-var connector = new Connector({
-	port: parseInt(process.argv[2], 10),
+module.exports = Swarm;
 
-	onMessage: function(message) {
-		console.log('message', message.buffer.toString('ascii'), message.buffer.length);
-	}
-});
+function Swarm(options) {
+	var port = options.port || 0,
+	    nodeId = options.nodeId,
+	    logger = options.logger;
 
-connector.start().run(null, function(error) {
-	console.log('error', error);
-});
+	var connector = new Connector({
+		port: port,
 
-connector.started().result(function() {
-	var port = connector.getPort();
+		onMessage: function(message) {
+			var str = message.buffer.toString('ascii');
 
-	console.log('port', port);
+			var serviceMatch = /^(?:(DATA) )/.exec(str);
 
-	//if (parseInt(process.argv[3])) connector.send('localhost', 4242, Buffer.from(''.padStart(466 + 1, 'x'))).run();
-}).run();
+			switch (serviceMatch && serviceMatch[1]) {
+			case 'DATA':
+				console.log('ho-ho, DATA');
+				break;
+			}
+		}
+	});
+
+	this.start = function() {
+		return connector.start();
+	};
+	this.started = connector.started.bind(connector);
+
+	this.getPort = connector.getPort.bind(connector);
+}

@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "asyncm": "1.0.7"
+    "asyncm": "1.0.7",
+    "dateformat": "3.0.2"
   }
 }

@@ -86,6 +86,12 @@ function Connector(options) {
 		isProcessingQueueSync = false;
 	}
 
+	var messageClient = {
+		reply: function(buffer) {
+			return self.send(this.address, this.port, buffer);
+		}
+	};
+
 	var pendingPackets = {};
 
 	this.start = AsyncM.fun(function(onResult, onError) {
@@ -115,10 +121,16 @@ function Connector(options) {
 					return null;
 				}
 			}).result(function(result) {
+				function callOnMessage(buffer) {
+					onMessage(Object.assign(Object.create(messageClient), {
+						buffer: buffer,
+						address: address,
+						port: targetPort
+					}));
+				}
+
 				if (result.chunksCount === 1) {
-					onMessage({
-						buffer: result.payload
-					});
+					callOnMessage(result.payload);
 					return;
 				}
 
@@ -165,9 +177,7 @@ function Connector(options) {
 
 						delete pending.chunks[result.chunkIndex];
 
-						onMessage({
-							buffer: buffer
-						});
+						callOnMessage(buffer);
 						return;
 					}
 
