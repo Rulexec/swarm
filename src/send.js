@@ -5,7 +5,7 @@ var connector = new Connector({
 	port: 0,
 
 	onMessage: function(message) {
-		console.log('message', message);
+		console.log('message <', message.buffer.toString('ascii'));
 	}
 });
 

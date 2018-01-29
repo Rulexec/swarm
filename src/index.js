@@ -7,9 +7,13 @@ module.exports = Swarm;
 function Swarm(options) {
 	var port = options.port || 0,
 	    nodeId = options.nodeId,
-	    logger = options.logger;
+	    logger = options.logger,
 
-	var dataService = new DataService();
+	    dataStore = options.dataStore;
+
+	var dataService = new DataService({
+		store: dataStore
+	});
 
 	var scheduler = new ParallelScheduler();
 
@@ -28,6 +32,9 @@ function Swarm(options) {
 			    serviceName = match[2],
 			    command = match[3];
 
+			var allocatedBuffer = null,
+			    allocatedBufferSlice = null;
+
 			function reply(data) {
 				if (typeof data === 'string') {
 					data = requestId + ' ' + data;
@@ -35,18 +42,34 @@ function Swarm(options) {
 					return message.reply(Buffer.from(data, 'ascii'));
 				}
 
-				var buffer = Buffer.allocUnsafe(requestId.length + 1 + data.length);
-				buffer.write(requestId + ' ', 'ascii');
-				data.copy(buffer, requestId.length + 1);
+				var buffer;
+
+				if (data === allocatedBufferSlice) {
+					buffer = allocatedBuffer;
+
+					buffer.write(requestId + ' ', 'ascii');
+				} else {
+					if (allocatedBuffer) logger.warning('allocatedBufferNotUsed', null, { extra: new Error('Allocated buffer is not used') });
+
+					buffer = Buffer.allocUnsafe(requestId.length + 1 + data.length);
+					buffer.write(requestId + ' ', 'ascii');
+					data.copy(buffer, requestId.length + 1);
+				}
 
 				console.log('> ' + buffer.toString('ascii'));
 
 				return message.reply(buffer);
 			}
 
+			function createBufferForReply(size) {
+				allocatedBuffer = Buffer.allocUnsafe(requestId.length + 1 + size);
+				allocatedBufferSlice = buffer.slice(requestId.length + 1);
+				return allocatedBufferSlice;
+			}
+
 			switch (serviceName) {
 			case 'DATA':
-				scheduler.schedule(dataService.processMessage.bind(dataService, { requestId, command, message, reply }));
+				scheduler.schedule(dataService.processMessage.bind(dataService, { requestId, command, message, reply, createBufferForReply }));
 				break;
 			}
 		}

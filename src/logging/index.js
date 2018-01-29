@@ -61,6 +61,8 @@ function Logger(options) {
 		}
 	};
 	this.error = function(key, props, options) { return this.log(key, props, Object.assign(options, { level: LEVEL.ERROR })); };
+	this.warn = function(key, props, options) { return this.log(key, props, Object.assign(options, { level: LEVEL.WARNING })); };
+	this.warning = function(key, props, options) { return this.log(key, props, Object.assign(options, { level: LEVEL.WARNING })); };
 
 	this.fork = function(opts) {
 		return new Logger(Object.assign({}, options, opts, {

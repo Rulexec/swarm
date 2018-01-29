@@ -2,14 +2,17 @@ var AsyncM = require('asyncm');
 
 var Logger = require('./logging');
 
-var Swarm = require('./index');
+var Swarm = require('./index'),
+    DataMemoryStore = require('./data/store/memory');
 
 var mainLogger = new Logger({ key: 'main' });
 
 var swarm = new Swarm({
 	logger: mainLogger.fork({ key: 'swarm' }),
 	port: 4242,
-	nodeId: 1
+	nodeId: 1,
+
+	dataStore: new DataMemoryStore()
 });
 
 AsyncM.parallel([

@@ -15,8 +15,10 @@ For example:
 # DATA
 ```
 > DATA GET (id)
-< DATA GET_OK (id) (version) (size) (binary)
+< DATA GET_OK (id) (version) [(size) (binary)]
 ```
+
+If item is not exists, `DATA GET_OK (id) 0` will be replied.
 
 ```
 > DATA DELETE1 (id) (version)
