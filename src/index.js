@@ -1,18 +1,16 @@
 var Connector = require('./net/connector'),
-    DataService = require('./data'),
+    KeyedDataService = require('./datak'),
     ParallelScheduler = require('./async/parallel-scheduler');
 
 module.exports = Swarm;
 
 function Swarm(options) {
-	var port = options.port || 0,
-	    nodeId = options.nodeId,
-	    logger = options.logger,
+	var {port, nodeId, logger, keyedStore} = options;
 
-	    dataStore = options.dataStore;
+	if (!port) port = 0;
 
-	var dataService = new DataService({
-		store: dataStore
+	var keyedDataService = new KeyedDataService({
+		store: keyedStore
 	});
 
 	var scheduler = new ParallelScheduler();
@@ -25,12 +23,13 @@ function Swarm(options) {
 
 			console.log('< ' + str);
 
-			var match = /^([0-9a-fA-F]{16}) (?:(DATA) )(.+)$/.exec(str);
+			var match = /^([0-9a-fA-F]{16}) (?:(DATAK) )(.+)$/.exec(str);
 			if (!match) return;
 
 			var requestId = match[1],
 			    serviceName = match[2],
-			    command = match[3];
+			    command = match[3],
+			    commandBuffer = message.buffer.slice(16 + 1 + serviceName.length + 1);
 
 			var allocatedBuffer = null,
 			    allocatedBufferSlice = null;
@@ -63,13 +62,19 @@ function Swarm(options) {
 
 			function createBufferForReply(size) {
 				allocatedBuffer = Buffer.allocUnsafe(requestId.length + 1 + size);
-				allocatedBufferSlice = buffer.slice(requestId.length + 1);
+				allocatedBufferSlice = allocatedBuffer.slice(requestId.length + 1);
 				return allocatedBufferSlice;
 			}
 
 			switch (serviceName) {
-			case 'DATA':
-				scheduler.schedule(dataService.processMessage.bind(dataService, { requestId, command, message, reply, createBufferForReply }));
+			case 'DATAK':
+				scheduler.schedule(function() {
+					return keyedDataService.processMessage({
+						requestId, command, commandBuffer, message, reply, createBufferForReply
+					}).error(function(error) {
+						logger.warn('DATAK', null, { extra: error });
+					});
+				});
 				break;
 			}
 		}

@@ -35,20 +35,20 @@ Data versions:
 * 2+ — stored by `PUT2` or `PUT3`, cannot be overwritten by `PUT0` or `PUT1`
 
 ```
-> DATA PUT0 (id) (data)
+> DATA PUT0 (id) (length) (data)
 ```
 
 Overwrites data, if version is `0` or `1`, does not responds.
 
 ```
-> DATA PUT1 (id) (data)
+> DATA PUT1 (id) (length) (data)
 
   < DATA PUT1_OK (id) (old_version)
 | < DATA PUT1_FAIL (id) (new_version)
 ```
 
 ```
-> DATA PUT2 (id) (version) (data)
+> DATA PUT2 (id) (version) (length) (data)
 
   < DATA PUT2_OK (id) (version)
 | < DATA PUT2_FAIL (id) (new_version)

@@ -3,7 +3,7 @@ var AsyncM = require('asyncm');
 var Logger = require('./logging');
 
 var Swarm = require('./index'),
-    DataMemoryStore = require('./data/store/memory');
+    KeyedDataMemoryStore = require('./datak/store/memory');
 
 var mainLogger = new Logger({ key: 'main' });
 
@@ -12,7 +12,7 @@ var swarm = new Swarm({
 	port: 4242,
 	nodeId: 1,
 
-	dataStore: new DataMemoryStore()
+	keyedStore: new KeyedDataMemoryStore()
 });
 
 AsyncM.parallel([
